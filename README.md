@@ -4,65 +4,162 @@ learn flow with codes
 
 本课程假设开发者已经对前端开发，尤其是React框架已经很熟悉。
 
-> 本次的目标是使用FCL开发第一个脚本来**读取**FLow链上数据,并用于替换`src\hooks\use-dappy-templates.hook.js`中`generateDappies`写死的数据。
+> 本次的目标是学习带参数的脚本和第一个交易脚本
 
-# 第一个FCL脚本
+# 带参数的脚本
 
-Flow的调用合约的代码分为脚本(scripts)和交易(transction)两种，他们都是采用强类型且内存安全的Cadence语言编写，但是脚本只能读取链上状态，而交易可以提交能修改链上状态的交易。
+目标是读取用户的Collection内容。这里面涉及到两个知识点：
+1.在Cadence里面读取的权限实际上是通过Capability进行细粒度控制的(Solidity则是通过msg.sender)；
+2.用户信息的读取可以使用FLow的`getAccount()` [API](https://docs.onflow.org/flow-go-sdk/#get-account)来实现
 
-本节我们使用脚本来读取已经部署好的链上合约数据，合约地址配置在`run.sh`中的`DAPPY_CONTRACT`，测试网代码[戳这里](https://flow-view-source.com/testnet/account/0xccb1fd9e1468b2e8/contract/DappyContract),下一节我们会采用自己部署的合约。
-
-## 配置链上合约地址
-首先在`run.sh`中修改API和合约地址，注意如果ACESS_API设置为上节的`https://rest-testnet.onflow.org`会出现跨域报错:
-
-```
-export ACCESS_API=https://rest-testnet.onflow.org
-export WALLET_DISCOVERY=https://fcl-discovery.onflow.org/testnet/authn
-export FT_CONTRACT=0x9a0766d93b6608b7
-export FUSD_CONTRACT=0xe223d8a629e49c68
-export DAPPY_CONTRACT=0xccb1fd9e1468b2e8
-```
-
-在 `/src/config/config.js`中配置合约的假名
+## 第一步将`user`信息传递到`use-collection`的hook里面
+修改 `src\providers\UserProvider.js`:
 
 ```
-config({
-    "accessNode.api": process.env.REACT_APP_ACCESS_NODE,
-    "discovery.wallet": process.env.REACT_APP_WALLET_DISCOVERY,
-    "0xDappy": process.env.REACT_APP_DAPPY_CONTRACT,
-})
+import {useAuth} from "./AuthProvider"
+
+const UserContext = createContext()
+
+export default function UserProvider({ children }) {
+  const {user} = useAuth()
+  const { collection, createCollection, deleteCollection } = useCollection(user)
+  ...
 ```
 
+## 第二步创建查询的脚本，并执行
 
-## 编写FCL前端调用合约
-创建`src/flow/list-dappy-template.script.js`文件。
-FCL前端调用实际上调用的是Cadense语言的脚本，他的基本规范是会执行下面代码中的`main()`函数，并返回我们上述配置好的合约里的`DappyContract.listTemplates()`，其返回值类型是`{UInt32: DappyContract.Template}`。
+### 查询脚本构建
+创建`src\flow\check-collection.script.js`脚本，其中`&{DappyContract.CollectionPublic}`表示查询结果的数据类型, `DappyContract.CollectionPublicPath`是`0xDappy`合约里面存储Collection的地址
+> Flow里面的用户数据是存在个人的路径上面,如`public/DappyCollectionPublic`,它分为Public和Private路径，Public路径只能查询里面的资源而不能修改。这点和Solidity有很大的区别，他的数据都存放在公共的合约里面。
 ```
-export const LISRT_DAPPY_TEMPLATES = `
-import DappyContract from 0xDappy  //引入部署好的合约
+export const CHECK_COLLECTION = `
+    import DappyContract from 0xDappy
+    pub fun main(addr:Address):Bool{
+    let ref = getAccount(addr).getCapability<&{DappyContract.CollectionPublic}>(DappyContract.CollectionPublicPath).check()
+    return ref
+    }
+    `
+```
 
-pub fun main(): {UInt32: DappyContract.Template}{
-    return DappyContract.listTemplates()
+### 执行交易
+在`src\hooks\use-collection.hook.js`中添加如下脚本，查询登陆用户`user`的地址下是否有`Collection`：
+
+```
+import { CHECK_COLLECTION } from '../flow/check-collection.script'
+
+export default function useCollection(user) {
+  const [loading, setLoading] = useState(true)
+  const [collection, setCollection] = useState(false)
+  console.log(user)
+  useEffect( () => {
+    setLoading(true)
+    if (!user?.addr) return
+    const checkCollection = async ()=>{
+      try {
+        let res = await query({
+          cadence : CHECK_COLLECTION,
+          args:(arg, t)=> [arg(user?.addr, t.Address)]
+        })
+        console.log(res)
+        setLoading(false)
+      } catch (err) {
+        console.log(err)
+        setLoading(false)
+      }
+
+    }
+    checkCollection()
+  }, [])
+```
+其中`args:(arg, t)`中的`arg`是参数，`t`则是参数的类型，当查询到res为false的时候就说明带参数的合约执行没有问题了
+
+
+# 第一个交易脚本
+在本节我们会添加和删除一个Colletion
+## 添加Collection
+这里会用到FCL的交易[相关API](https://docs.onflow.org/fcl/reference/transactions/#authorizing-a-transaction)。交易api为`mutate`合约语法与`query`不同的地方在于，交易提供了`prepare`这个函数用来获取授权的用户信息上下文(类似于msg.sender),同时可以在交易中更改合约的状态，这点在脚本中是无法做到的。
+
+首先创建`src\flow\create-collection.tx.js`脚本，这里我们`tx`作为第二个后缀以区分脚本和交易。
+```
+export const CREATE_COLLECTION = `
+import DappyContract from 0xDappy
+transaction {
+    prepare(acct: AuthAccount) {
+        let collection <- DappyContract.createEmptyCollection()
+        acct.save<@DappyContract.Collection>(<- collection, to: DappyContract.CollectionStoragePath)
+        acct.link<&{DappyContract.CollectionPublic}>(DappyContract.CollectionPublicPath, target: DappyContract.CollectionStoragePath)
+    }
 }
+`
 ```
 
-## 实现前端调用
-只需要调用FCL的query函数即可。
-引入上述`list-dappy-template.script.js`合约和FCL的`query`函数,并在 `src\hooks\use-dappy-templates.hook.js`中把原来的`res`替换为下面的代码实现调用:
+## 执行CreateCollection交易
+在`src\hooks\use-collection.hook.js`中采用FCL的`mutate` API来执行交易，同时然后等待交易被打包之后更新交易状态。
+> 需要注意的是需要设置`limit`来执行交易，这类似于以太坊的gas，limit设置值可以参考[文档](https://docs.onflow.org/concepts/variable-transaction-fees/#configuring-execution-limits)。
 ```
-import {query} from "@onflow/fcl"
-
-import {LISRT_DAPPY_TEMPLATES} from "../flow/list-dappy-template.script"
+import { CREATE_COLLECTION } from '../flow/create-collection.tx'
 ...
-    let res = await query({
-        cadence: LISRT_DAPPY_TEMPLATES,
-    })
+
+  const createCollection = async () => {
+    try {
+      setLoading(true)
+      let txId  = await mutate({
+        cadence: CREATE_COLLECTION,
+        limit: 55
+      });
+      console.log("tx id is:", txId)
+      const txStatus = await tx(txId).onceSealed();  #等待交易打包
+      console.log('tx status:',txStatus) // The transactions status and events after being sealed
+      setCollection(true)
+    } catch (err){
+      console.error(err)
+      setLoading(false)
+    }
+ 
+  }
+```
+
+## 删除collection
+类似地创建`src\flow\delete-collection.tx.js`：
 
 ```
+export const DELETE_COLLECTION = `
+import DappyContract from 0xDappy
+transaction {
+    prepare(acct: AuthAccount) {
+        let collection <- acct.load<@DappyContract.Collection>(from: DappyContract.CollectionStoragePath)
+        destroy collection
+        acct.unlink(DappyContract.CollectionPublicPath)
+    }
+}
+`
+```
+
+然后在`src\hooks\use-collection.hook.js`中采用FCL的`mutate` API来执行删除交易:
+
+```
+import { DELETE_COLLECTION } from '../flow/delete-collection.tx'
+  const deleteCollection = async () => {
+    try {
+      setLoading(true)
+      let txId  = await mutate({
+        cadence: DELETE_COLLECTION,
+        limit: 75
+      });
+      console.log("tx id is:", txId)
+      const txStatus = await tx(txId).onceSealed();
+      console.log('tx status:',txStatus) // The transactions status and events after being sealed
+      setCollection(false)
+    } catch (err){
+      console.error(err)
+    }
+    window.location.reload()
+  }
+  ```
 
 ## Have fun!访问
-访问http://localhost:3000/dappies,就能看到两个小图片啦!
-![dappy页面](./public/imgs/pat.png)
+访问http://localhost:3000/collection, 点击`enable colletion`后就能console下下面的交易id被打印出来，同时按钮也被变成`delete collection`。这个过程会很长，大概10秒，耐心等待。
+
 
 # 运行
 
