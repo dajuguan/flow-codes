@@ -43,6 +43,8 @@ jspm_packages/
 /.pnp
 .pnp.js
 
+.env.testnet
+
 # TypeScript v1 declaration files
 typings/
 

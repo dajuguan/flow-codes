@@ -7,6 +7,8 @@
 	},
 	"contracts": {
 		"DappyContract": "./cadence/contracts/DappyContract.cdc",
+		"BasicToken": "./cadence/contracts/BasicToken.cdc",
+		"Greeting": "./cadence/contracts/Greeting.cdc",
 		"FUSD": {
 			"source": "./cadence/contracts/FUSD.cdc",
 			"aliases": {
@@ -32,5 +34,6 @@
 			"key": "ae1b44c0f5e8f6992ef2348898a35e50a8b0b9684000da8b1dade1b3bcd6ebee"
 		}
 	},
-	"deployments": {}
+	"deployments": {
+	}
 }

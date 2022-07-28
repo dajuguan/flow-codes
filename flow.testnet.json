@@ -1,0 +1,21 @@
+{
+    "accounts": {
+      "testnet-account": {
+        "address": "${ADMIN_ADDRESS}",
+        "key":{
+            "type": "hex",
+            "index": 0,
+            "signatureAlgorithm": "ECDSA_secp256k1",
+            "hashAlgorithm": "SHA2_256",
+            "privateKey": "${FLOW_PRIVATE_KEY}"
+          }
+      }
+    },
+    "deployments": {
+      "testnet": {
+        "testnet-account": [
+            "BasicToken"
+          ]
+      }
+    }
+  }

@@ -43,3 +43,18 @@ code {
 .highlight {
   color: yellow
 }
+
+.modal {
+  border-style: solid;
+  border-radius: 5px;
+  margin: 70px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 5px;
+  width: 30%;
+  height: 200px;
+  position: absolute;
+  top: 20px;
+  left: 50px;
+  transition: all 5s ease-in-out;
+}

@@ -10,8 +10,10 @@ const UserContext = createContext()
 export default function UserProvider({ children }) {
   const {user} = useAuth()
   const { collection, createCollection, deleteCollection } = useCollection(user)
-  const { data: balance, createFUSDVault, getFUSDBalance } = useFUSD()
+
+  const { data: balance, createFUSDVault, getFUSDBalance} = useFUSD(user)
   const { data: userDappies, addDappy, batchAddDappies, mintDappy } = useUserDappies()
+
 
   return (
     <UserContext.Provider

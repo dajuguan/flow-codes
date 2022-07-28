@@ -24,7 +24,6 @@ export default function useCollection(user) {
         console.log(err)
         setLoading(false)
       }
-
     }
     checkCollection()
   }, [])
