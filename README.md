@@ -275,6 +275,7 @@ npm run deploy
 ## 前端代码-EnableCollection
 对于没有创建Collection的用户，他是无法mint和接收Dappy的，所以需要先为其创建空的Collection资源。
 创建`src\flow\create-collection.tx.js`:
+
 ```
 export const CREATE_COLLECTION = `
 import DappyCollection from 0xDappy
@@ -284,9 +285,11 @@ transaction {
         acct.save<@DappyCollection.Collection>(<- collection, to: DappyCollection.CollectionStoragePath)
         acct.link<&DappyCollection.Collection{DappyCollection.CollectionPublic,DappyCollection.Provider,DappyCollection.Receiver}>(DappyCollection.CollectionPublicPath, target: DappyCollection.CollectionStoragePath)
     }
-}
-`
+}`
+```
+
 同样分别创建`src\flow\check-collection.script.js`读取Collection:
+
 ```
 export const CHECK_COLLECTION = `
     import DappyCollection from 0xDappy
@@ -296,7 +299,9 @@ export const CHECK_COLLECTION = `
     }
     `
 ```
+
 创建`src\flow\delete-collection.tx.js`删除Collection:
+
 ```
 export const DELETE_COLLECTION = `
 import DappyCollection from 0xDappy
@@ -309,6 +314,7 @@ transaction {
 }
 `
 ```
+
 在Hook中创建、读取和销毁Collection的接口`src\hooks\use-collection.hook.js`:
 ```
 import { CHECK_COLLECTION } from '../flow/check-collection.script'
