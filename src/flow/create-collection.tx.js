@@ -1,10 +1,10 @@
 export const CREATE_COLLECTION = `
-import DappyContract from 0xDappy
+import DappyCollection from 0xDappy
 transaction {
     prepare(acct: AuthAccount) {
-        let collection <- DappyContract.createEmptyCollection()
-        acct.save<@DappyContract.Collection>(<- collection, to: DappyContract.CollectionStoragePath)
-        acct.link<&{DappyContract.CollectionPublic}>(DappyContract.CollectionPublicPath, target: DappyContract.CollectionStoragePath)
+        let collection <- DappyCollection.createEmptyCollection()
+        acct.save<@DappyCollection.Collection>(<- collection, to: DappyCollection.CollectionStoragePath)
+        acct.link<&DappyCollection.Collection{DappyCollection.CollectionPublic,DappyCollection.Provider,DappyCollection.Receiver}>(DappyCollection.CollectionPublicPath, target: DappyCollection.CollectionStoragePath)
     }
 }
 `

@@ -1,8 +1,8 @@
 
 export const LISRT_DAPPY_TEMPLATES = `
-import DappyContract from 0xDappy 
+import DappyCollection from 0xDappy 
 
-pub fun main(): {UInt32: DappyContract.Template}{
-    return DappyContract.listTemplates()
+pub fun main(): {UInt32: DappyCollection.Template}{
+    return DappyCollection.listTemplates()
 }
 ` 

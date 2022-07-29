@@ -6,7 +6,6 @@ import { useUser } from '../providers/UserProvider'
 
 export default function Collection() {
   const { collection, createCollection, deleteCollection, userDappies } = useUser()
-
   return (
     <>
       <Header

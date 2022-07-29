@@ -4,7 +4,6 @@ import { CHECK_COLLECTION } from '../flow/check-collection.script'
 import { CREATE_COLLECTION } from '../flow/create-collection.tx'
 import { DELETE_COLLECTION } from '../flow/delete-collection.tx'
 
-
 export default function useCollection(user) {
   const [loading, setLoading] = useState(true)
   const [collection, setCollection] = useState(false)
@@ -34,7 +33,7 @@ export default function useCollection(user) {
       setLoading(true)
       let txId  = await mutate({
         cadence: CREATE_COLLECTION,
-        limit: 55
+        limit: 75
       });
       console.log("tx id is:", txId)
       const txStatus = await tx(txId).onceSealed();

@@ -1,10 +1,10 @@
 export const DELETE_COLLECTION = `
-import DappyContract from 0xDappy
+import DappyCollection from 0xDappy
 transaction {
     prepare(acct: AuthAccount) {
-        let collection <- acct.load<@DappyContract.Collection>(from: DappyContract.CollectionStoragePath)
+        let collection <- acct.load<@DappyCollection.Collection>(from: DappyCollection.CollectionStoragePath)
         destroy collection
-        acct.unlink(DappyContract.CollectionPublicPath)
+        acct.unlink(DappyCollection.CollectionPublicPath)
     }
 }
 `

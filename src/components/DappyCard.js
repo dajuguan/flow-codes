@@ -15,7 +15,7 @@ export default function DappyCard({ dappy, store }) {
     <div
       onClick={() => mintDappy(id, price)}
       className="btn btn-bordered btn-light btn-dappy">
-      <i className="ri-shopping-cart-fill btn-icon"></i> {parseInt(price)} FUSD
+      <i className="ri-shopping-cart-fill btn-icon"></i> {parseFloat(price).toFixed(1)} FUSD
     </div>
   )
 

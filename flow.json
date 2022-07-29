@@ -6,8 +6,13 @@
 		}
 	},
 	"contracts": {
-		"DappyContract": "./cadence/contracts/DappyContract.cdc",
-		"BasicToken": "./cadence/contracts/BasicToken.cdc",
+		"DappyCollection": "./cadence/contracts/DappyCollection.cdc",
+		"BasicToken": {
+			"source": "./cadence/contracts/BasicToken.cdc",
+			"aliases": {
+				"testnet": "0xe223d8a629e49c68"
+			}
+		},
 		"Greeting": "./cadence/contracts/Greeting.cdc",
 		"FUSD": {
 			"source": "./cadence/contracts/FUSD.cdc",
@@ -34,6 +39,5 @@
 			"key": "ae1b44c0f5e8f6992ef2348898a35e50a8b0b9684000da8b1dade1b3bcd6ebee"
 		}
 	},
-	"deployments": {
-	}
+	"deployments": {}
 }

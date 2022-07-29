@@ -1,7 +1,7 @@
 export const CHECK_COLLECTION = `
-    import DappyContract from 0xDappy
+    import DappyCollection from 0xDappy
     pub fun main(addr:Address):Bool{
-    let ref = getAccount(addr).getCapability<&{DappyContract.CollectionPublic}>(DappyContract.CollectionPublicPath).check()
+    let ref = getAccount(addr).getCapability<&{DappyCollection.CollectionPublic}>(DappyCollection.CollectionPublicPath).check()
     return ref
     }
     `

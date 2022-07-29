@@ -12,7 +12,7 @@ export default function UserProvider({ children }) {
   const { collection, createCollection, deleteCollection } = useCollection(user)
 
   const { data: balance, createFUSDVault, getFUSDBalance} = useFUSD(user)
-  const { data: userDappies, addDappy, batchAddDappies, mintDappy } = useUserDappies()
+  const { data: userDappies, addDappy, batchAddDappies, mintDappy } = useUserDappies(user,collection,getFUSDBalance)
 
 
   return (
